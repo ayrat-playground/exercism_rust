@@ -5,7 +5,7 @@ pub fn nth(n: usize) -> Result<usize, &'static str> {
         return Err("Must be bigger than 0")
     }
 
-    for i in 2..1_000_000_000 {
+    for i in 2.. {
         if prime(i) {
             count = count + 1;
         }

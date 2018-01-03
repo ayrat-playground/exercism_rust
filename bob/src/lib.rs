@@ -24,13 +24,10 @@ pub fn reply(message: &str) -> &str {
 
 fn any_alphanumeric(message: &str) -> bool {
     message.chars().any(
-        |char| char.is_alphabetic()
+        |ch| ch.is_alphabetic()
     )
 }
 
 fn all_uppercase(message: &str) -> bool {
-    message.chars().all(
-        |char| (!char.is_alphabetic()) ||
-            (char.is_uppercase() && char.is_alphabetic())
-    )
+    message == message.to_uppercase()
 }
