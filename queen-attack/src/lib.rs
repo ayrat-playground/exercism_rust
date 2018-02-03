@@ -25,6 +25,6 @@ impl Queen {
     pub fn can_attack(&self, other: &Queen) -> bool {
         return (self.position.column == other.position.column) ||
             (self.position.row == other.position.row) ||
-            (self.position.row - other.position.column) == (self.position.column - other.position.column)
+            (self.position.row - other.position.row).abs() == (self.position.column - other.position.column).abs()
     }
 }

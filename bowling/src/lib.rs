@@ -11,7 +11,7 @@ pub struct BowlingGame {
 
 impl Frame {
     fn new(idx: usize, throw: usize) -> Result<Self, &'static str> {
-        if idx > 8 || throw > 10 { return Err("Wrong idx or throw for a frame") }
+        if idx > 9 || throw > 10 { return Err("Wrong idx or throw for a frame") }
 
         Ok(Frame{ idx: idx, throws: vec!(throw) })
     }
@@ -22,12 +22,22 @@ impl Frame {
 
         self.throws.push(throw);
 
-        Ok(())
+        if (self.throws.iter().sum::<usize>() > 10 && self.idx != 9) ||
+            (self.throws.len() == 3 && self.idx == 9 && self.throws[0] == 10 && self.throws[1] < 10 && self.throws[1] + self.throws[2] > 10) {
+            Err("Wrong throw sum")
+        } else {
+            Ok(())
+        }
     }
 
     fn is_full(&self) -> bool {
-        if (self.throws.len() == 2 && self.idx < 9) || (self.idx == 9 && self.throws.len() == 3) { return true }
-        if self.throws.len() != 9 && self.throws[0] == 10 { return true }
+        if (self.throws.len() == 2 && self.idx < 9) ||
+            (self.idx == 9 && self.throws.len() == 3) ||
+            (self.idx == 9 && self.throws.len() == 2 && (self.throws[0] + self.throws[1]) < 10)
+        {
+            return true
+        }
+        if self.idx != 9 && self.throws[0] == 10 { return true }
 
         false
     }
@@ -43,37 +53,45 @@ impl BowlingGame {
             let frame = Frame::new(0, throw)?;
 
             self.frames.push(frame);
+        } else if self.frames.last().unwrap().is_full() {
+            let frame = Frame::new(self.frames.len(), throw)?;
 
-            Ok(())
+            self.frames.push(frame);
         } else {
-            if self.frames.last().unwrap().is_full() {
-                let frame = Frame::new(self.frames.len(), throw)?;
+            let last_idx = self.frames.len() - 1;
+            let mut frame = self.frames[last_idx].clone();
 
-                self.frames.push(frame);
-                Ok(())
-            } else {
-                let last_idx = self.frames.len() - 1;
-                let mut frame = self.frames[last_idx].clone();
-                frame.add(throw)?;
-                self.frames[last_idx] = frame;
+            frame.add(throw)?;
 
-                Ok(())
-            }
+            self.frames[last_idx] = frame;
         }
+
+        Ok(())
     }
 
     pub fn score(&self) -> Result<usize, ()> {
-        println!("{:?}", self);
-        if self.frames.len() != 10 { return Err(()) }
+        if (self.frames.len() != 10) ||
+            (self.frames.len() == 10 && self.frames[9].throws.len() == 1 && self.frames[9].throws[0] == 10) ||
+            (self.frames.len() == 10 && self.frames[9].throws.len() == 2 && self.frames[9].throws[1] == 10) ||
+            (self.frames.len() == 10 && self.frames[9].throws.len() == 2 && self.frames[9].throws.iter().sum::<usize>() == 10)
+        { return Err(()) }
 
         let mut result = 0;
 
         for frame in &self.frames {
             if frame.idx != 9 {
                 if frame.throws[0] == 10 {
-                    result = 10 + self.frames[frame.idx + 1].throws.iter().sum::<usize>();
+                    if self.frames[frame.idx + 1].throws[0] == 10 {
+                        if frame.idx + 1 == 9 {
+                            result += 10 + self.frames[frame.idx + 1].throws[0] + self.frames[frame.idx + 1].throws[1];
+                        } else {
+                            result += 10 + self.frames[frame.idx + 1].throws[0] + self.frames[frame.idx + 2].throws[0];
+                        }
+                    } else {
+                        result += 10 + self.frames[frame.idx + 1].throws.iter().sum::<usize>();
+                    }
                 } else if frame.throws.iter().sum::<usize>() == 10 {
-                    result = 10 + self.frames[frame.idx + 1].throws[0];
+                    result += 10 + self.frames[frame.idx + 1].throws[0];
                 } else {
                     result += frame.throws.iter().sum::<usize>();
                 }
